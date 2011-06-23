@@ -13,7 +13,7 @@
  *     - Naglite3 (https://saz.sh/2011/01/22/naglite3-nagios-status-monitor-for-a-noc-or-operations-room/)
  *                (https://github.com/saz/Naglite3)
  *                Author: Steffen Zieger <me@saz.sh> (http://saz.sh)
- *  
+ *
  *  @author     Rich Adams <rich@richadams.me> (http://richadams.me)
  *  @license    GPL
  */
@@ -181,7 +181,7 @@ foreach ($status as $type => $items)
                 // Ignore all services if host state is not OK
                 if ($nagios["host"]["OK"] != $status["hoststatus"][$service["host_name"]]["current_state"])
                     continue;
-                    
+
                 if ($service["problem_has_been_acknowledged"] == "1")
                 {
                     $counts['services']['ACKd']++;
@@ -347,7 +347,7 @@ else {
     table td.service {
         white-space: nowrap;
     }
-    
+
     table td.status {
         text-align: left;
     }
