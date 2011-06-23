@@ -1,14 +1,21 @@
 <?php
 /**
- *  Naglite3 - Nagios Status Monitor
- *  Inspired by Naglite (http://www.monitoringexchange.org/inventory/Utilities/AddOn-Projects/Frontends/NagLite)
- *  and Naglite2 (http://laur.ie/blog/2010/03/naglite2-finally-released/)
+ *  nagnoc - Nagios Status Monitor for NOC or Operations Room
  *
- *  @author        Steffen Zieger <me@saz.sh>
- *  @version    1.0
+ *  Inspired by:
+ *     - Naglite  (http://www.monitoringexchange.org/inventory/Utilities/AddOn-Projects/Frontends/NagLite)
+ *
+ *     - Naglite2 (http://laur.ie/blog/2010/03/naglite2-finally-released/)
+ *                (https://github.com/lozzd/Naglite2)
+ *                Author: Laurie Denness <laurie@denness.net> (http://laurie.denness.net)
+ *
+ *  Forked from:
+ *     - Naglite3 (https://saz.sh/2011/01/22/naglite3-nagios-status-monitor-for-a-noc-or-operations-room/)
+ *                (https://github.com/saz/Naglite3)
+ *                Author: Steffen Zieger <me@saz.sh> (http://saz.sh)
+ *  
+ *  @author     Rich Adams <rich@richadams.me> (http://richadams.me)
  *  @license    GPL
- *
- *  Modified by Rich Adams (http://richadams.me)
  */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +25,7 @@
 $status_file = "/var/cache/nagios3/status.dat";
 
 // Default refresh time in seconds
-$refresh = 10;
+$refresh = 5;
 
 // Nothing to change below here
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,13 +41,13 @@ header("Refresh: " .$refresh);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Functions
 
+// Calculate the duration from a timestamp and display in d, h:m:s format.
 function duration($end)
 {
-    $DAY = 86400;
+    $DAY  = 86400;
     $HOUR = 3600;
 
-    $now     = time();
-    $diff    = $now - $end;
+    $diff    = time() - $end;
     $days    = floor($diff / $DAY);
     $hours   = floor(($diff % $DAY) / $HOUR);
     $minutes = floor((($diff % $DAY) % $HOUR) / 60);
@@ -49,9 +56,9 @@ function duration($end)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Read the status file input
+// Parse the input file
 
-// Nagios Status Map
+// Nagios status map
 $nagios["host"]["OK"]          = 0;
 $nagios["host"]["DOWN"]        = 1;
 $nagios["host"]["UNREACHABLE"] = 2;
@@ -62,17 +69,11 @@ $nagios["service"]["CRITICAL"] = 2;
 $nagios["service"]["UNKNOWN"]  = 3;
 $nagios["service"] += array_keys($nagios["service"]);
 
-// Check to make sure the file is readable, break out with an error if not.
-if (is_readable($status_file))
-{
-    $nagiosStatus = file($status_file);
-}
-else
-{
-    die("ERROR: Unable to open status file: ".$status_file);
-}
+// Check to make sure the file is readable, break out with an error if not
+if (!is_readable($status_file)) { die("ERROR: Unable to open status file: ".$status_file); }
+$nagiosStatus = file($status_file);
 
-
+// Parse the Nagios .dat file
 $in     = false;
 $type   = "unknown";
 $status = array();
@@ -124,18 +125,20 @@ for ($i = 0; $i < count($nagiosStatus); $i++)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Count based on current states
+
 // Initialize some counter arrays
 $counts = array();
 $objs   = array();
 
 // Populate the counters
-foreach (array_keys($status) as $type)
+foreach ($status as $type => $items)
 {
     switch ($type)
     {
         case "hoststatus":
-            $hosts = $status[$type];
-            foreach ($hosts as $host)
+            foreach ($items as $host)
             {
                 if ($host["problem_has_been_acknowledged"] == "1")
                 {
@@ -173,16 +176,12 @@ foreach (array_keys($status) as $type)
             break;
 
         case "servicestatus":
-            $services = $status[$type];
-            foreach ($services as $service)
+            foreach ($items as $service)
             {
                 // Ignore all services if host state is not OK
-                $state = $status["hoststatus"][$service["host_name"]]["current_state"];
-                if ($nagios["host"]["OK"] != $state)
-                {
+                if ($nagios["host"]["OK"] != $status["hoststatus"][$service["host_name"]]["current_state"])
                     continue;
-                }
-                // Service is in warning level
+                    
                 if ($service["problem_has_been_acknowledged"] == "1")
                 {
                     $counts['services']['ACKd']++;
@@ -218,10 +217,6 @@ foreach (array_keys($status) as $type)
                             $objs['services']['UNKNOWN'][] = $service;
                             break;
                     }
-
-                    if ($nagios["service"]["OK"] != $service["current_state"]) {
-                        $servicesNOKList[] = $service;
-                    }
                 }
             }
             break;
@@ -246,12 +241,14 @@ else {
     $overall = "warning";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Start output
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" >
 <head>
     <title>Nagios Monitoring</title>
-    <meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\" />
+    <meta http-equiv="Content-type" content="application/xhtml+xml; charset=utf-8"/>
 
     <style>
     * {
@@ -324,10 +321,17 @@ else {
         padding: 2px 0px;
         color: #000;
         border-bottom: 2px solid #000;
+        text-align: left;
+        padding-left: 10px;
+        border-right: 1px solid #000;
     }
 
     table td {
         padding: 2px 10px;
+        text-align: left;
+        padding-left: 10px;
+        border-right: 1px solid #000;
+        border-bottom: 1px dotted #000;
     }
 
     table td.hostname {
@@ -343,19 +347,25 @@ else {
     table td.service {
         white-space: nowrap;
     }
+    
+    table td.status {
+        text-align: left;
+    }
 
     table td.state {
         font-size: 1em;
+        text-align: left;
+        padding-left: 10px;
     }
 
     /* Colours */
     .up, .ok         { background: #008000; }
-    .warning         { background: #ffff00; color: #000; }
-    .critical, .down { background: #ff0000; }
-    .unknown         { background: #00ffff; }
+    .warning         { background: #ff0; color: #000; }
+    .critical, .down { background: #f00; }
+    .unknown         { background: #0ff; }
     .pending         { background: #488acf; }
     .notifs          { background: #69b3b3; color: #000; }
-    .ackd            { background: #d3d3d3; }
+    .ackd            { background: #d3d3d3; color: #000; }
     .unreachable     { background: #ff8040; }
     </style>
 </head>
@@ -389,21 +399,26 @@ else {
                 <table>
                 <tr>
                     <th>Host</th>
+                    <th>State</th>
                     <th>Status</th>
                     <th>Duration</th>
                     <th>Status Info</th>
                 </tr>
                 <?
-                foreach ($objs['hosts'] as $type => $host)
+                foreach ($objs['hosts'] as $type => $obj)
                 {
-                ?>
-                <tr class="<?=strtolower($type);?>">
-                    <td class="hostname"><?=$host['host_name'];?></td>
-                    <td class="state"><?=$nagios['host'][$host['current_state']];?></td>
-                    <td class="duration"><?=duration($host['last_state_change']);?></td>
-                    <td><?=$host['plugin_output'];?></td>
-                </tr>
-                <?
+                    foreach ($obj as $host)
+                    {
+                    ?>
+                        <tr class="<?=strtolower($type);?>">
+                            <td class="hostname"><?=$host['host_name'];?></td>
+                            <td class="state"><?=$type;?></td>
+                            <td class="status <!--<?=strtolower($nagios['host'][$host['current_state']]);?>-->"><?=$nagios['host'][$host['current_state']];?></td>
+                            <td class="duration"><?=duration($host['last_state_change']);?></td>
+                            <td><?=$host['plugin_output'];?></td>
+                        </tr>
+                    <?
+                    }
                 }
                 ?>
                 </table>
@@ -452,12 +467,11 @@ else {
                 {
                     foreach ($obj as $service)
                     {
-                        $state = $nagios["service"][$service["current_state"]];
                     ?>
                         <tr class="<?=strtolower($type);?>">
                             <td class="hostname"><?=$service['host_name'];?></td>
                             <td class="service"><?=$service['service_description'];?></td>
-                            <td class="state"><?=$state;?><? if ($service['current_attempt'] != $service['max_attempts']) { echo " (Soft)"; }?></td>
+                            <td class="state"><?=$nagios["service"][$service["current_state"]];?><? if ($service['current_attempt'] != $service['max_attempts']) { echo " (Soft)"; }?></td>
                             <td class="duration"><?=duration($service['last_state_change']);?></td>
                             <td><?=$service['current_attempt']."/".$service['max_attempts'];?></td>
                             <td><?=$service['plugin_output'];?></td>

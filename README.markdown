@@ -1,30 +1,33 @@
-Naglite3
-========
+NagNoc
+======
 
-Nagios status monitor for a NOC or operations room.
+A Nagios status monitor for a NOC or operations room.
 
-Inspired by Naglite (http://www.monitoringexchange.org/inventory/Utilities/AddOn-Projects/Frontends/NagLite) 
-and Naglite2 (http://laur.ie/blog/2010/03/naglite2-finally-released/).
+Inspired by:
+  - Naglite  (http://www.monitoringexchange.org/inventory/Utilities/AddOn-Projects/Frontends/NagLite)
 
-Written by Steffen Zieger <me@saz.sh>.
+  - Naglite2 (http://laur.ie/blog/2010/03/naglite2-finally-released/)
+             (https://github.com/lozzd/Naglite2)
+             Author: Laurie Denness <laurie@denness.net> (http://laurie.denness.net)
+
+Forked from:
+  - Naglite3 (https://saz.sh/2011/01/22/naglite3-nagios-status-monitor-for-a-noc-or-operations-room/)
+             (https://github.com/saz/Naglite3)
+             Author: Steffen Zieger <me@saz.sh> (http://saz.sh)
+
 Licensed under the GPL.
-Modifications by Rich Adams (http://richadams.me)
-
-In case of any problems or bug fixes, feel free to contact me.
 
 Requirements
 ------------
 
-Only tested with Nagios3, but it should also work with Nagios2.
-
-For installation you need a Webserver running PHP 5.2+.
-
+Only tested with Nagios 3, but it should also work with Nagios 2.
+For installation you need a webserver running PHP 5.2+.
 Access to Nagios status.dat is required.
 
 Installation
 ------------
 
-1. Place index.php in the document root of your web server.
+1. Put index.php on your web server.
 2. Edit index.php and change the path to your status.dat if required.
 
 Customization
