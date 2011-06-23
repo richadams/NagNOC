@@ -1,12 +1,12 @@
 <?php
 /**
- *	Naglite3 - Nagios Status Monitor
- *	Inspired by Naglite (http://www.monitoringexchange.org/inventory/Utilities/AddOn-Projects/Frontends/NagLite)
- *	and Naglite2 (http://laur.ie/blog/2010/03/naglite2-finally-released/)
+ *  Naglite3 - Nagios Status Monitor
+ *  Inspired by Naglite (http://www.monitoringexchange.org/inventory/Utilities/AddOn-Projects/Frontends/NagLite)
+ *  and Naglite2 (http://laur.ie/blog/2010/03/naglite2-finally-released/)
  *
- *	@author		Steffen Zieger <me@saz.sh>
- *	@version	1.0
- *	@license	GPL
+ *  @author        Steffen Zieger <me@saz.sh>
+ *  @version    1.0
+ *  @license    GPL
  *
  *  Modified by Rich Adams (http://richadams.me)
  */
@@ -27,7 +27,7 @@ $refresh = 10;
 header("Pragma: no-cache");
 if (!empty($_GET["refresh"]) && is_numeric($_GET["refresh"]))
 {
-	$refresh = $_GET["refresh"];
+    $refresh = $_GET["refresh"];
 }
 header("Refresh: " .$refresh);
 
@@ -36,16 +36,16 @@ header("Refresh: " .$refresh);
 
 function duration($end)
 {
-	$DAY = 86400;
-	$HOUR = 3600;
+    $DAY = 86400;
+    $HOUR = 3600;
 
-	$now     = time();
-	$diff    = $now - $end;
-	$days    = floor($diff / $DAY);
-	$hours   = floor(($diff % $DAY) / $HOUR);
-	$minutes = floor((($diff % $DAY) % $HOUR) / 60);
-	$secs    = $diff % 60;
-	return sprintf("%dd, %02d:%02d:%02d", $days, $hours, $minutes, $secs);
+    $now     = time();
+    $diff    = $now - $end;
+    $days    = floor($diff / $DAY);
+    $hours   = floor(($diff % $DAY) / $HOUR);
+    $minutes = floor((($diff % $DAY) % $HOUR) / 60);
+    $secs    = $diff % 60;
+    return sprintf("%dd, %02d:%02d:%02d", $days, $hours, $minutes, $secs);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -65,7 +65,7 @@ $nagios["service"] += array_keys($nagios["service"]);
 // Check to make sure the file is readable, break out with an error if not.
 if (is_readable($status_file))
 {
-	$nagiosStatus = file($status_file);
+    $nagiosStatus = file($status_file);
 }
 else
 {
@@ -79,48 +79,49 @@ $status = array();
 $host   = null;
 for ($i = 0; $i < count($nagiosStatus); $i++)
 {
-	if (false === $in)
-	{
-		$pos = strpos($nagiosStatus[$i], "{");
-		if (false !== $pos)
-		{
-			$in = true;
-			$type = substr($nagiosStatus[$i], 0, $pos-1);
+    if (false === $in)
+    {
+        $pos = strpos($nagiosStatus[$i], "{");
+        if (false !== $pos)
+        {
+            $in = true;
+            $type = substr($nagiosStatus[$i], 0, $pos-1);
             if (!empty($status[$type]))
             {
-    			$arrPos = count($status[$type]);
+                $arrPos = count($status[$type]);
             }
             else
             {
                 $arrPos = 0;
             }
-			continue;
-		}
-	}
-	else
-	{
-		$pos = strpos($nagiosStatus[$i], "}");
-		if(false !== $pos)
-		{
-			$in = false;
-			$type = "unknown";
-			continue;
-		}
+            continue;
+        }
+    }
+    else
+    {
+        $pos = strpos($nagiosStatus[$i], "}");
+        if(false !== $pos)
+        {
+            $in = false;
+            $type = "unknown";
+            continue;
+        }
 
-		// Line with data found
-		list($key, $value) = explode("=", trim($nagiosStatus[$i]), 2);
-		if ("hoststatus" === $type)
-		{
-			if("host_name" === $key)
-			{
-				$host = $value;
-			}
-			$status[$type][$host][$key] = $value;
-		} else
-		{
-			$status[$type][$arrPos][$key] = $value;
-		}
-	}
+        // Line with data found
+        list($key, $value) = explode("=", trim($nagiosStatus[$i]), 2);
+        if ("hoststatus" === $type)
+        {
+            if("host_name" === $key)
+            {
+                $host = $value;
+            }
+            $status[$type][$host][$key] = $value;
+        }
+        else
+        {
+            $status[$type][$arrPos][$key] = $value;
+        }
+    }
 }
 
 // Initialize some counter arrays
@@ -130,101 +131,101 @@ $objs   = array();
 // Populate the counters
 foreach (array_keys($status) as $type)
 {
-	switch ($type)
-	{
-	    case "hoststatus":
-		    $hosts = $status[$type];
-		    foreach ($hosts as $host)
-		    {
-			    if ($host["problem_has_been_acknowledged"] == "1")
-			    {
-			        $counts['hosts']['ACKd']++;
-			        $objs['hosts']['ACKd'][] = $host;
-			    }
-			    else if ($host["notifications_enabled"] == 0)
-			    {
-			        $counts['hosts']['NOTIFS']++;
-			        $objs['hosts']['NOTIFS'][] = $host;
-			    }
-			    else if ($host["has_been_checked"] == 0)
-			    {
-			        $counts['hosts']['PENDING']++;
-			        $objs['hosts']['PENDING'][] = $host;
-			    }
-			    else
-			    {
-				    switch ($host["current_state"])
-				    {
-					    case $nagios["host"]["OK"]:
-					        $counts['hosts']['OK']++;
-						    break;
-					    case $nagios["host"]["DOWN"]:
-					        $counts['hosts']['DOWN']++;
-					        $objs['hosts']['DOWN'][] = $host;
-						    break;
-					    case $nagios["host"]["UNREACHABLE"]:
-					        $counts['hosts']['UNREACHABLE']++;
-					        $objs['hosts']['UNREACHABLE'][] = $host;
-						    break;
-				    }
-			    }
-		    }
-		    break;
+    switch ($type)
+    {
+        case "hoststatus":
+            $hosts = $status[$type];
+            foreach ($hosts as $host)
+            {
+                if ($host["problem_has_been_acknowledged"] == "1")
+                {
+                    $counts['hosts']['ACKd']++;
+                    $objs['hosts']['ACKd'][] = $host;
+                }
+                else if ($host["notifications_enabled"] == 0)
+                {
+                    $counts['hosts']['NOTIFS']++;
+                    $objs['hosts']['NOTIFS'][] = $host;
+                }
+                else if ($host["has_been_checked"] == 0)
+                {
+                    $counts['hosts']['PENDING']++;
+                    $objs['hosts']['PENDING'][] = $host;
+                }
+                else
+                {
+                    switch ($host["current_state"])
+                    {
+                        case $nagios["host"]["OK"]:
+                            $counts['hosts']['OK']++;
+                            break;
+                        case $nagios["host"]["DOWN"]:
+                            $counts['hosts']['DOWN']++;
+                            $objs['hosts']['DOWN'][] = $host;
+                            break;
+                        case $nagios["host"]["UNREACHABLE"]:
+                            $counts['hosts']['UNREACHABLE']++;
+                            $objs['hosts']['UNREACHABLE'][] = $host;
+                            break;
+                    }
+                }
+            }
+            break;
 
-	    case "servicestatus":
-		    $services = $status[$type];
-		    foreach ($services as $service)
-		    {
-			    // Ignore all services if host state is not OK
-			    $state = $status["hoststatus"][$service["host_name"]]["current_state"];
-			    if ($nagios["host"]["OK"] != $state)
-			    {
-				    continue;
-			    }
-			    // Service is in warning level
-			    if ($service["problem_has_been_acknowledged"] == "1")
-			    {
-			        $counts['services']['ACKd']++;
-			        $objs['services']['ACKd'][] = $service;
-			    }
-			    else if ($service["notifications_enabled"] == "0")
-			    {
-			        $counts['services']['NOTIFS']++;
-			        $objs['services']['NOTIFS'][] = $service;
-			    }
-			    else if ($service["has_been_checked"] == "0")
-			    {
-			        $counts['services']['PENDING']++;
-			        $objs['services']['PENDING'][] = $service;
-			    }
-			    else
-			    {
-				    switch ($service["current_state"])
-				    {
-					    case $nagios["service"]["OK"]:
-					        $counts['services']['OK']++;
-						    break;
-					    case $nagios["service"]["WARNING"]:
-					        $counts['services']['WARNING']++;
-		                    $objs['services']['WARNING'][] = $service;
-						    break;
-					    case $nagios["service"]["CRITICAL"]:
-					        $counts['services']['CRITICAL']++;
+        case "servicestatus":
+            $services = $status[$type];
+            foreach ($services as $service)
+            {
+                // Ignore all services if host state is not OK
+                $state = $status["hoststatus"][$service["host_name"]]["current_state"];
+                if ($nagios["host"]["OK"] != $state)
+                {
+                    continue;
+                }
+                // Service is in warning level
+                if ($service["problem_has_been_acknowledged"] == "1")
+                {
+                    $counts['services']['ACKd']++;
+                    $objs['services']['ACKd'][] = $service;
+                }
+                else if ($service["notifications_enabled"] == "0")
+                {
+                    $counts['services']['NOTIFS']++;
+                    $objs['services']['NOTIFS'][] = $service;
+                }
+                else if ($service["has_been_checked"] == "0")
+                {
+                    $counts['services']['PENDING']++;
+                    $objs['services']['PENDING'][] = $service;
+                }
+                else
+                {
+                    switch ($service["current_state"])
+                    {
+                        case $nagios["service"]["OK"]:
+                            $counts['services']['OK']++;
+                            break;
+                        case $nagios["service"]["WARNING"]:
+                            $counts['services']['WARNING']++;
+                            $objs['services']['WARNING'][] = $service;
+                            break;
+                        case $nagios["service"]["CRITICAL"]:
+                            $counts['services']['CRITICAL']++;
                             $objs['services']['CRITICAL'][] = $service;
-						    break;
-					    case $nagios["service"]["UNKNOWN"]:
-					        $counts['services']['UNKNOWN']++;
-			                $objs['services']['UNKNOWN'][] = $service;
-						    break;
-				    }
+                            break;
+                        case $nagios["service"]["UNKNOWN"]:
+                            $counts['services']['UNKNOWN']++;
+                            $objs['services']['UNKNOWN'][] = $service;
+                            break;
+                    }
 
-				    if ($nagios["service"]["OK"] != $service["current_state"]) {
-					    $servicesNOKList[] = $service;
-				    }
-			    }
-		    }
-		    break;
-	}
+                    if ($nagios["service"]["OK"] != $service["current_state"]) {
+                        $servicesNOKList[] = $service;
+                    }
+                }
+            }
+            break;
+    }
 }
 
 // Work out overall status
@@ -271,7 +272,7 @@ else {
     #content {
         background: #000;
         height: 99.5%;
-        margin: 10px;                                                                                                         
+        margin: 10px;
     }
 
     .section {
@@ -342,7 +343,7 @@ else {
     table td.service {
         white-space: nowrap;
     }
-    
+
     table td.state {
         font-size: 1em;
     }
