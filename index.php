@@ -41,18 +41,26 @@ header("Refresh: " .$refresh);
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Functions
 
-// Calculate the duration from a timestamp and display in d, h:m:s format.
-function duration($end)
+// Calculate the duration from a timestamp and show it in a user friendly format.
+function duration($time)
 {
-    $DAY  = 86400;
-    $HOUR = 3600;
+    $format  = "F m, Y G:i";
+    $year    = 365 * 24 * 60 * 60;
+    $month   = 30 * 7 * 24 * 60 * 60;
+    $day     = 24 * 60 * 60;
+    $hour    = 60 * 60;
+    $mins    = 60;
+    $seconds = 1;
 
-    $diff    = time() - $end;
-    $days    = floor($diff / $DAY);
-    $hours   = floor(($diff % $DAY) / $HOUR);
-    $minutes = floor((($diff % $DAY) % $HOUR) / 60);
-    $secs    = $diff % 60;
-    return sprintf("%dd, %02d:%02d:%02d", $days, $hours, $minutes, $secs);
+    $x = time() - $time;
+    if ($x >= $year)        { $pre ="On";    $x = date($format, $time); $post=""; }
+    elseif ($x >= $month)   { $pre ="On";    $x = date($format, $time); $post=""; }
+    elseif ($x >= $day)     { $pre ="About"; $x = round($x / $day);     $post="days ago"; }
+    elseif ($x >= $hour)    { $pre ="About"; $x = round($x / $hour);    $post="hours ago"; }
+    elseif ($x >= $mins)    { $pre ="About"; $x = round($x / $mins);    $post="minutes ago"; }
+    elseif ($x >= $seconds) { $pre ="About"; $x = round($x / $seconds); $post="seconds ago"; }
+    elseif ($x < 0)         { $x = ""; $post="right now!"; }
+    return $pre." ".$x." ".$post;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,57 +79,39 @@ $nagios["service"] += array_keys($nagios["service"]);
 
 // Check to make sure the file is readable, break out with an error if not
 if (!is_readable($status_file)) { die("ERROR: Unable to open status file: ".$status_file); }
-$nagiosStatus = file($status_file);
+$statusLines = file($status_file);
 
 // Parse the Nagios .dat file
-$in     = false;
-$type   = "unknown";
 $status = array();
-$host   = null;
-for ($i = 0; $i < count($nagiosStatus); $i++)
+$type   = "unknown";
+$flag   = false;
+$vals   = array();
+foreach($statusLines as $line)
 {
-    if (false === $in)
+    if (!$flag)
     {
-        $pos = strpos($nagiosStatus[$i], "{");
-        if (false !== $pos)
+        // If it's start of a new section, setup vars.
+        if (false !== strpos($line, "{"))
         {
-            $in = true;
-            $type = substr($nagiosStatus[$i], 0, $pos-1);
-            if (!empty($status[$type]))
-            {
-                $arrPos = count($status[$type]);
-            }
-            else
-            {
-                $arrPos = 0;
-            }
-            continue;
+            $flag = true;
+            $type = trim(substr(trim($line), 0, -1));
+            $vals = array();
         }
     }
     else
     {
-        $pos = strpos($nagiosStatus[$i], "}");
-        if(false !== $pos)
+        // If at the end of the section, reset flag and skip to next line.
+        if (false !== strpos($line, "}"))
         {
-            $in = false;
+            $status[$type][] = $vals;
+            $flag = false;
             $type = "unknown";
             continue;
         }
 
-        // Line with data found
-        list($key, $value) = explode("=", trim($nagiosStatus[$i]), 2);
-        if ("hoststatus" === $type)
-        {
-            if("host_name" === $key)
-            {
-                $host = $value;
-            }
-            $status[$type][$host][$key] = $value;
-        }
-        else
-        {
-            $status[$type][$arrPos][$key] = $value;
-        }
+        // Otherwise, we've got a data line, so store it.
+        list($key, $value) = explode("=", trim($line), 2);
+        $vals[$key] = $value;
     }
 }
 
@@ -332,24 +322,12 @@ else {
         padding-left: 10px;
         border-right: 1px solid #000;
         border-bottom: 1px dotted #000;
+        white-space: nowrap;
     }
 
     table td.hostname {
         background: #d3d3d3;
         color: #000;
-    }
-
-    table td.duration {
-        text-align: right;
-        white-space: nowrap;
-    }
-
-    table td.service {
-        white-space: nowrap;
-    }
-
-    table td.status {
-        text-align: left;
     }
 
     table td.state {
