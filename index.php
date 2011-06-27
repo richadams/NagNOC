@@ -313,6 +313,7 @@ else {
         border-bottom: 2px solid #000;
         text-align: left;
         padding-left: 10px;
+        padding-right: 10px;
         border-right: 1px solid #000;
     }
 
@@ -334,6 +335,10 @@ else {
         font-size: 1em;
         text-align: left;
         padding-left: 10px;
+    }
+    
+    table td.output {
+        white-space: normal;
     }
 
     /* Colours */
@@ -393,7 +398,7 @@ else {
                             <td class="state"><?=$type;?></td>
                             <td class="status <!--<?=strtolower($nagios['host'][$host['current_state']]);?>-->"><?=$nagios['host'][$host['current_state']];?></td>
                             <td class="duration"><?=duration($host['last_state_change']);?></td>
-                            <td><?=$host['plugin_output'];?></td>
+                            <td class="output"><?=$host['plugin_output'];?></td>
                         </tr>
                     <?
                     }
@@ -452,7 +457,7 @@ else {
                             <td class="state"><?=$nagios["service"][$service["current_state"]];?><? if ($service['current_attempt'] != $service['max_attempts']) { echo " (Soft)"; }?></td>
                             <td class="duration"><?=duration($service['last_state_change']);?></td>
                             <td><?=$service['current_attempt']."/".$service['max_attempts'];?></td>
-                            <td><?=$service['plugin_output'];?></td>
+                            <td class="output"><?=$service['plugin_output'];?></td>
                         </tr>
                     <?
                     }
