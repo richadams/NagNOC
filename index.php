@@ -373,7 +373,7 @@ else {
             }
 
             if (isset($counts['hosts']['UNREACHABLE'])
-                || isset($counts['hosts']['ACKD'])
+                || isset($counts['hosts']['ACKd'])
                 || isset($counts['hosts']['PENDING'])
                 || isset($counts['hosts']['NOTIFS'])
                 || isset($counts['hosts']['DOWN']))
